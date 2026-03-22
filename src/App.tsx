@@ -49,6 +49,7 @@ const App = () => (
             <Route path="/minigames" element={<ProtectedRoute><GameLayout><MiniGames /></GameLayout></ProtectedRoute>} />
             <Route path="/leaderboard" element={<ProtectedRoute><GameLayout><Leaderboard /></GameLayout></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><GameLayout><Profile /></GameLayout></ProtectedRoute>} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
