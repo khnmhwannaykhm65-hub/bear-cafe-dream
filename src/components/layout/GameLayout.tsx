@@ -1,8 +1,9 @@
 import { ReactNode, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, Building2, Backpack, Store, Gamepad2, Trophy, User, Menu, X, Coins, Star } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Home, Building2, Backpack, Store, Gamepad2, Trophy, User, Menu, X, Coins, Star, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatNumber } from '@/lib/game-logic';
+import { useToast } from '@/hooks/use-toast';
 
 const NAV_ITEMS = [
   { path: '/dashboard', icon: Home, label: 'หน้าหลัก', emoji: '🏠' },
@@ -21,12 +22,18 @@ interface GameLayoutProps {
 export default function GameLayout({ children }: GameLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Mock player data (will come from DB later)
   const money = 12450;
   const level = 7;
   const exp = 340;
   const expNeeded = 500;
+
+  function handleLogout() {
+    toast({ title: '👋 ออกจากระบบแล้ว', description: 'แล้วพบกันใหม่!' });
+    navigate('/');
+  }
 
   return (
     <div className="min-h-screen bg-background grid-pattern">
@@ -46,7 +53,7 @@ export default function GameLayout({ children }: GameLayoutProps) {
             </h1>
           </Link>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 bg-secondary/80 rounded-full px-3 py-1.5">
             <Coins className="w-4 h-4 text-[hsl(var(--game-gold))]" />
             <span className="font-mono-game text-sm font-bold">{formatNumber(money)}</span>
@@ -55,6 +62,13 @@ export default function GameLayout({ children }: GameLayoutProps) {
             <Star className="w-4 h-4 text-[hsl(var(--game-exp))]" />
             <span className="font-mono-game text-sm font-bold">Lv.{level}</span>
           </div>
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors active:scale-95"
+            title="ออกจากระบบ"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
@@ -64,7 +78,6 @@ export default function GameLayout({ children }: GameLayoutProps) {
           "fixed lg:sticky top-14 left-0 z-30 h-[calc(100vh-3.5rem)] w-64 bg-sidebar border-r flex flex-col transition-transform duration-300 lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
-          {/* Overlay */}
           {sidebarOpen && (
             <div className="fixed inset-0 bg-black/20 lg:hidden" onClick={() => setSidebarOpen(false)} />
           )}
@@ -91,7 +104,7 @@ export default function GameLayout({ children }: GameLayoutProps) {
             })}
           </nav>
 
-          {/* Sidebar Footer - Player Stats */}
+          {/* Sidebar Footer */}
           <div className="p-3 border-t bg-sidebar relative z-10">
             <div className="glass-card rounded-xl p-3 space-y-2">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -114,6 +127,15 @@ export default function GameLayout({ children }: GameLayoutProps) {
                 </div>
               </div>
             </div>
+
+            {/* Logout button */}
+            <button
+              onClick={handleLogout}
+              className="w-full mt-2 flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors active:scale-[0.97]"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>ออกจากระบบ</span>
+            </button>
           </div>
         </aside>
 
