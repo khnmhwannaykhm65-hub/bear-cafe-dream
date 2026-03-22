@@ -1,19 +1,58 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Mail, Lock, UserPlus, LogIn } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { signIn, signUp, user } = useAuth();
+  const { toast } = useToast();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleDiscordLogin = () => {
-    // TODO: Replace with real Discord OAuth via Supabase
+  // If already logged in, redirect
+  if (user) {
     navigate('/dashboard');
-  };
+    return null;
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || !password) {
+      toast({ title: '⚠️ กรุณากรอกข้อมูลให้ครบ', variant: 'destructive' });
+      return;
+    }
+    setLoading(true);
+
+    if (isSignUp) {
+      const { error } = await signUp(email, password, displayName || undefined);
+      if (error) {
+        toast({ title: '❌ สมัครไม่สำเร็จ', description: error, variant: 'destructive' });
+      } else {
+        toast({ title: '✅ สมัครสำเร็จ!', description: 'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ' });
+        setIsSignUp(false);
+      }
+    } else {
+      const { error } = await signIn(email, password);
+      if (error) {
+        toast({ title: '❌ เข้าสู่ระบบไม่สำเร็จ', description: error, variant: 'destructive' });
+      } else {
+        navigate('/dashboard');
+      }
+    }
+    setLoading(false);
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
       style={{ background: 'linear-gradient(135deg, hsl(340 30% 97%) 0%, hsl(330 40% 92%) 40%, hsl(335 50% 88%) 100%)' }}
     >
-      {/* Grid pattern */}
       <div className="absolute inset-0 grid-pattern opacity-40" />
 
       {/* Floating decorative elements */}
@@ -26,7 +65,7 @@ export default function Login() {
 
       {/* Main card */}
       <div className="relative z-10 animate-slide-up">
-        <div className="glass-card rounded-3xl p-10 max-w-sm w-full mx-4 text-center space-y-8 glow-pink">
+        <form onSubmit={handleSubmit} className="glass-card rounded-3xl p-10 max-w-sm w-full mx-4 text-center space-y-6 glow-pink">
           {/* Logo */}
           <div className="space-y-3">
             <div className="text-6xl animate-float">🏙️</div>
@@ -34,32 +73,72 @@ export default function Login() {
               BeanCity
             </h1>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              สร้างเมือง • เปิดร้าน • ค้าขาย<br />
-              เชื่อมต่อกับ Discord ของคุณ
+              สร้างเมือง • เปิดร้าน • ค้าขาย
             </p>
           </div>
 
-          {/* Discord Login */}
+          {/* Form */}
+          <div className="space-y-3 text-left">
+            {isSignUp && (
+              <div className="relative animate-slide-up">
+                <UserPlus className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="ชื่อในเกม"
+                  value={displayName}
+                  onChange={e => setDisplayName(e.target.value)}
+                  className="pl-10 rounded-xl h-11"
+                />
+              </div>
+            )}
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="email"
+                placeholder="อีเมล"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="pl-10 rounded-xl h-11"
+              />
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="password"
+                placeholder="รหัสผ่าน"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="pl-10 rounded-xl h-11"
+              />
+            </div>
+          </div>
+
           <Button
-            onClick={handleDiscordLogin}
+            type="submit"
+            disabled={loading}
             size="lg"
-            className="w-full h-12 rounded-xl text-base font-semibold gap-3 transition-all duration-200 active:scale-[0.97]"
-            style={{ 
-              background: 'hsl(235 86% 65%)', 
-              color: 'white',
-              boxShadow: '0 4px 20px hsl(235 86% 65% / 0.3)'
-            }}
+            className="w-full h-12 rounded-xl text-base font-semibold gap-2 transition-all duration-200 active:scale-[0.97]"
           >
-            <svg width="20" height="20" viewBox="0 0 71 55" fill="currentColor">
-              <path d="M60.1 4.9A58.5 58.5 0 0045.4.2a.2.2 0 00-.2.1 41 41 0 00-1.8 3.7 54 54 0 00-16.2 0A38 38 0 0025.4.3a.2.2 0 00-.2-.1 58.4 58.4 0 00-14.7 4.6.2.2 0 00-.1 0A60 60 0 00.4 43.5a.2.2 0 000 .2 58.8 58.8 0 0017.7 9 .2.2 0 00.3-.1 42 42 0 003.6-5.9.2.2 0 00-.1-.3 38.8 38.8 0 01-5.5-2.7.2.2 0 01 0-.4l1.1-.9a.2.2 0 01.2 0 42 42 0 0035.6 0 .2.2 0 01.2 0l1.1.9a.2.2 0 010 .4 36.4 36.4 0 01-5.5 2.7.2.2 0 00-.1.3 47.2 47.2 0 003.6 5.9.2.2 0 00.3.1 58.6 58.6 0 0017.7-9 .2.2 0 000-.2C68 19 64.2 10 60.2 5a.2.2 0 000-.1zM23.7 35.6c-3.4 0-6.2-3.1-6.2-7s2.7-7 6.2-7 6.3 3.2 6.2 7-2.8 7-6.2 7zm22.9 0c-3.4 0-6.2-3.1-6.2-7s2.7-7 6.2-7 6.3 3.2 6.2 7-2.7 7-6.2 7z"/>
-            </svg>
-            เข้าสู่ระบบด้วย Discord
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : isSignUp ? (
+              <><UserPlus className="w-5 h-5" /> สมัครสมาชิก</>
+            ) : (
+              <><LogIn className="w-5 h-5" /> เข้าสู่ระบบ</>
+            )}
           </Button>
 
-          <p className="text-xs text-muted-foreground/60">
-            เข้าสู่ระบบเพื่อเริ่มต้นสร้างเมืองของคุณ
+          <button
+            type="button"
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-sm text-primary hover:underline transition-colors"
+          >
+            {isSignUp ? 'มีบัญชีแล้ว? เข้าสู่ระบบ' : 'ยังไม่มีบัญชี? สมัครสมาชิก'}
+          </button>
+
+          <p className="text-[10px] text-muted-foreground/60">
+            เชื่อมต่อ Discord ได้ภายหลังในหน้าโปรไฟล์
           </p>
-        </div>
+        </form>
       </div>
     </div>
   );

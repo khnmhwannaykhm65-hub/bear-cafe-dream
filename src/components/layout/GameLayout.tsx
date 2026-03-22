@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Building2, Backpack, Store, Gamepad2, Trophy, User, Menu, X, Coins, Star, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatNumber } from '@/lib/game-logic';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 const NAV_ITEMS = [
@@ -24,13 +25,17 @@ export default function GameLayout({ children }: GameLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { profile, signOut } = useAuth();
 
-  const money = 12450;
-  const level = 7;
-  const exp = 340;
-  const expNeeded = 500;
+  const money = profile?.coins ?? 0;
+  const level = profile?.level ?? 1;
+  const exp = profile?.exp ?? 0;
+  const expNeeded = Math.floor(100 * Math.pow(1.5, level - 1));
+  const displayName = profile?.display_name ?? 'ผู้เล่นใหม่';
+  const prestige = profile?.prestige ?? 0;
 
-  function handleLogout() {
+  async function handleLogout() {
+    await signOut();
     toast({ title: '👋 ออกจากระบบแล้ว', description: 'แล้วพบกันใหม่!' });
     navigate('/');
   }
@@ -47,14 +52,14 @@ export default function GameLayout({ children }: GameLayoutProps) {
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="text-2xl">🏙️</span>
+            <span className="text-2xl animate-wiggle">🏙️</span>
             <h1 className="text-lg font-bold tracking-tight text-primary" style={{ fontFamily: 'Syne' }}>
               BeanCity
             </h1>
           </Link>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 bg-secondary/80 rounded-full px-3 py-1.5">
+          <div className="flex items-center gap-1.5 bg-secondary/80 rounded-full px-3 py-1.5 animate-coin-shine">
             <Coins className="w-4 h-4 text-[hsl(var(--game-gold))]" />
             <span className="font-mono-game text-sm font-bold">{formatNumber(money)}</span>
           </div>
@@ -114,21 +119,22 @@ export default function GameLayout({ children }: GameLayoutProps) {
               <div className="h-2 bg-secondary rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-[hsl(var(--game-exp))] rounded-full transition-all duration-500"
-                  style={{ width: `${(exp / expNeeded) * 100}%` }}
+                  style={{ width: `${Math.min((exp / expNeeded) * 100, 100)}%` }}
                 />
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm">
-                  👤
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                  ) : '👤'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">BeanBuilder</p>
-                  <p className="text-xs text-muted-foreground font-mono-game">Level {level} • ⭐ P.1</p>
+                  <p className="text-sm font-semibold truncate">{displayName}</p>
+                  <p className="text-xs text-muted-foreground font-mono-game">Level {level} • ⭐ P.{prestige}</p>
                 </div>
               </div>
             </div>
 
-            {/* Logout button */}
             <button
               onClick={handleLogout}
               className="w-full mt-2 flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors active:scale-[0.97]"

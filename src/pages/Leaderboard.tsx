@@ -1,10 +1,33 @@
 import { cn } from '@/lib/utils';
-import { SAMPLE_LEADERBOARD, formatNumber } from '@/lib/game-logic';
+import { formatNumber } from '@/lib/game-logic';
+import { useAuth } from '@/hooks/useAuth';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const RANK_MEDALS = ['', '🥇', '🥈', '🥉'];
 
 export default function Leaderboard() {
-  const myEntry = SAMPLE_LEADERBOARD.find(e => e.me);
+  const { profile } = useAuth();
+
+  const { data: entries = [] } = useQuery({
+    queryKey: ['leaderboard'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, display_name, city_name, coins, level')
+        .order('coins', { ascending: false })
+        .limit(20);
+      return (data ?? []).map((e, i) => ({
+        rank: i + 1,
+        name: e.display_name,
+        cityName: e.city_name,
+        score: e.coins,
+        me: e.id === profile?.id,
+      }));
+    },
+  });
+
+  const myEntry = entries.find(e => e.me);
 
   return (
     <div className="space-y-5 max-w-3xl">
@@ -13,7 +36,6 @@ export default function Leaderboard() {
         <p className="text-sm text-muted-foreground mt-0.5">จัดอันดับตามมูลค่าเมือง</p>
       </div>
 
-      {/* My rank summary */}
       {myEntry && (
         <div className="glass-card rounded-2xl p-4 flex items-center gap-4 glow-pink animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl font-bold font-mono-game text-primary">
@@ -23,16 +45,11 @@ export default function Leaderboard() {
             <p className="font-semibold">⭐ อันดับของคุณ</p>
             <p className="text-sm text-muted-foreground">{myEntry.cityName} • 🪙 {formatNumber(myEntry.score)}</p>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-[hsl(var(--game-exp))] font-semibold">▲ +2</p>
-            <p className="text-[10px] text-muted-foreground">จากเมื่อวาน</p>
-          </div>
         </div>
       )}
 
-      {/* Leaderboard list */}
       <div className="space-y-2 animate-slide-up" style={{ animationDelay: '0.15s' }}>
-        {SAMPLE_LEADERBOARD.map(entry => (
+        {entries.map(entry => (
           <div
             key={entry.rank}
             className={cn(
@@ -55,6 +72,12 @@ export default function Leaderboard() {
             <p className="font-mono-game text-sm font-bold">🪙 {formatNumber(entry.score)}</p>
           </div>
         ))}
+        {entries.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <span className="text-4xl block mb-2">🏆</span>
+            <p>ยังไม่มีผู้เล่นในอันดับ</p>
+          </div>
+        )}
       </div>
     </div>
   );

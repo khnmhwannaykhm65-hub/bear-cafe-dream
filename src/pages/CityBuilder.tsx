@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -6,51 +6,117 @@ import {
   BUILDINGS, GRID_SIZE, createEmptyGrid, calcBuildingIncome, calcTotalCityIncome,
   getActiveBonuses, formatNumber, type BuildingType, type PlacedBuilding
 } from '@/lib/game-logic';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import ShopModal from '@/components/ShopModal';
 
 type Mode = 'view' | 'build' | 'move' | 'delete';
 
 export default function CityBuilder() {
-  const [grid, setGrid] = useState(() => {
-    const g = createEmptyGrid();
-    g[1][1] = { type: 'cafe', level: 2, row: 1, col: 1 };
-    g[1][2] = { type: 'park', level: 1, row: 1, col: 2 };
-    g[2][1] = { type: 'bakery', level: 1, row: 2, col: 1 };
-    g[0][0] = { type: 'house', level: 1, row: 0, col: 0 };
-    g[3][3] = { type: 'tree', level: 1, row: 3, col: 3 };
-    return g;
-  });
+  const { profile, refreshProfile } = useAuth();
+  const { toast } = useToast();
+  const [grid, setGrid] = useState(() => createEmptyGrid());
   const [mode, setMode] = useState<Mode>('view');
   const [selectedBuild, setSelectedBuild] = useState<BuildingType>('cafe');
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
   const [moveSource, setMoveSource] = useState<[number, number] | null>(null);
   const [shopModal, setShopModal] = useState<{ type: BuildingType; row: number; col: number } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Load buildings from DB
+  useEffect(() => {
+    if (!profile) return;
+    (async () => {
+      const { data } = await supabase
+        .from('buildings')
+        .select('*')
+        .eq('user_id', profile.id);
+      if (data) {
+        const g = createEmptyGrid();
+        for (const b of data) {
+          if (b.grid_row < GRID_SIZE && b.grid_col < GRID_SIZE) {
+            g[b.grid_row][b.grid_col] = {
+              type: b.building_type as BuildingType,
+              level: b.building_level,
+              row: b.grid_row,
+              col: b.grid_col,
+            };
+          }
+        }
+        setGrid(g);
+      }
+      setLoading(false);
+    })();
+  }, [profile]);
 
   const totalIncome = useMemo(() => calcTotalCityIncome(grid), [grid]);
   const bonuses = useMemo(() => getActiveBonuses(grid), [grid]);
   const selectedBuilding = selectedCell ? grid[selectedCell[0]][selectedCell[1]] : null;
   const selectedInfo = selectedBuilding ? calcBuildingIncome(selectedBuilding, grid) : null;
 
-  function handleCellClick(r: number, c: number) {
+  async function handleCellClick(r: number, c: number) {
+    if (!profile) return;
+
     if (mode === 'build') {
       if (!grid[r][c]) {
-        const newGrid = grid.map(row => [...row]);
-        newGrid[r][c] = { type: selectedBuild, level: 1, row: r, col: c };
-        setGrid(newGrid);
-        setSelectedCell([r, c]);
+        const def = BUILDINGS[selectedBuild];
+        if ((profile.coins ?? 0) < def.cost) {
+          toast({ title: '❌ เงินไม่พอ!', description: `ต้องการ 🪙 ${def.cost}`, variant: 'destructive' });
+          return;
+        }
+
+        // Insert building to DB
+        const { error } = await supabase.from('buildings').insert({
+          user_id: profile.id,
+          building_type: selectedBuild,
+          building_level: 1,
+          grid_row: r,
+          grid_col: c,
+        });
+
+        if (!error) {
+          // Deduct coins
+          await supabase.from('profiles').update({
+            coins: (profile.coins ?? 0) - def.cost,
+            updated_at: new Date().toISOString(),
+          }).eq('id', profile.id);
+
+          const newGrid = grid.map(row => [...row]);
+          newGrid[r][c] = { type: selectedBuild, level: 1, row: r, col: c };
+          setGrid(newGrid);
+          setSelectedCell([r, c]);
+          refreshProfile();
+          toast({ title: `🏗️ สร้าง ${def.nameTh} สำเร็จ!` });
+        }
       }
     } else if (mode === 'delete') {
       if (grid[r][c]) {
+        // Delete from DB
+        await supabase.from('buildings')
+          .delete()
+          .eq('user_id', profile.id)
+          .eq('grid_row', r)
+          .eq('grid_col', c);
+
         const newGrid = grid.map(row => [...row]);
         newGrid[r][c] = null;
         setGrid(newGrid);
         setSelectedCell(null);
+        toast({ title: '🗑️ ลบอาคารแล้ว' });
       }
     } else if (mode === 'move') {
       if (!moveSource && grid[r][c]) {
         setMoveSource([r, c]);
       } else if (moveSource) {
         if (!grid[r][c]) {
+          // Update position in DB
+          await supabase.from('buildings')
+            .update({ grid_row: r, grid_col: c })
+            .eq('user_id', profile.id)
+            .eq('grid_row', moveSource[0])
+            .eq('grid_col', moveSource[1]);
+
           const newGrid = grid.map(row => [...row]);
           const bld = { ...newGrid[moveSource[0]][moveSource[1]]!, row: r, col: c };
           newGrid[r][c] = bld;
@@ -64,7 +130,49 @@ export default function CityBuilder() {
     }
   }
 
+  async function handleUpgrade() {
+    if (!selectedCell || !selectedBuilding || !profile) return;
+    const def = BUILDINGS[selectedBuilding.type];
+    const cost = def.cost * selectedBuilding.level;
+    if (selectedBuilding.level >= def.maxLevel) {
+      toast({ title: '⚠️ เลเวลสูงสุดแล้ว', variant: 'destructive' });
+      return;
+    }
+    if ((profile.coins ?? 0) < cost) {
+      toast({ title: '❌ เงินไม่พอ!', variant: 'destructive' });
+      return;
+    }
+
+    await supabase.from('buildings')
+      .update({ building_level: selectedBuilding.level + 1 })
+      .eq('user_id', profile.id)
+      .eq('grid_row', selectedCell[0])
+      .eq('grid_col', selectedCell[1]);
+
+    await supabase.from('profiles').update({
+      coins: (profile.coins ?? 0) - cost,
+      updated_at: new Date().toISOString(),
+    }).eq('id', profile.id);
+
+    const newGrid = grid.map(row => [...row]);
+    newGrid[selectedCell[0]][selectedCell[1]] = { ...selectedBuilding, level: selectedBuilding.level + 1 };
+    setGrid(newGrid);
+    refreshProfile();
+    toast({ title: `⬆️ อัพเกรด ${def.nameTh} เป็น Lv.${selectedBuilding.level + 1}!` });
+  }
+
   const buildingCount = grid.flat().filter(Boolean).length;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center space-y-2 animate-slide-up">
+          <span className="text-4xl animate-float">🏙️</span>
+          <p className="text-muted-foreground text-sm">กำลังโหลดเมือง...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 max-w-6xl">
@@ -72,7 +180,7 @@ export default function CityBuilder() {
       <div className="flex-1 space-y-4 animate-slide-up">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold" style={{ fontFamily: 'Syne' }}>🏙️ เมืองของฉัน</h1>
+            <h1 className="text-xl font-bold" style={{ fontFamily: 'Syne' }}>🏙️ {profile?.city_name ?? 'เมืองของฉัน'}</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               ตึก {buildingCount}/{GRID_SIZE * GRID_SIZE} • รายได้ <span className="font-mono-game text-foreground font-bold">{formatNumber(totalIncome)}</span>/ชม.
             </p>
@@ -108,7 +216,7 @@ export default function CityBuilder() {
                     selectedBuild === b.type ? "bg-primary/10 ring-2 ring-primary" : "hover:bg-secondary"
                   )}
                 >
-                  <span className="text-2xl">{b.icon}</span>
+                  <span className="text-2xl animate-bounce-gentle">{b.icon}</span>
                   <span className="truncate w-full text-center">{b.nameTh}</span>
                   <span className="font-mono-game text-[10px] text-muted-foreground">🪙{b.cost}</span>
                 </button>
@@ -131,7 +239,7 @@ export default function CityBuilder() {
                     key={`${r}-${c}`}
                     onClick={() => handleCellClick(r, c)}
                     className={cn(
-                      "aspect-square rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center text-xs active:scale-95 relative overflow-hidden",
+                      "aspect-square rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center text-xs active:scale-95 relative overflow-hidden group",
                       bld
                         ? "bg-card border-pink-200 hover:border-primary shadow-sm"
                         : "bg-secondary/40 border-dashed border-border hover:bg-secondary/60",
@@ -143,7 +251,7 @@ export default function CityBuilder() {
                   >
                     {bld ? (
                       <>
-                        <span className="text-2xl sm:text-3xl">{def!.icon}</span>
+                        <span className="text-2xl sm:text-3xl group-hover:animate-wiggle transition-transform">{def!.icon}</span>
                         <span className="font-mono-game text-[9px] text-muted-foreground mt-0.5">Lv.{bld.level}</span>
                       </>
                     ) : (
@@ -175,7 +283,7 @@ export default function CityBuilder() {
             {selectedBuilding && selectedInfo ? (
               <div className="glass-card rounded-2xl p-4 space-y-3">
                 <div className="text-center">
-                  <span className="text-4xl">{BUILDINGS[selectedBuilding.type].icon}</span>
+                  <span className="text-4xl animate-bounce-gentle">{BUILDINGS[selectedBuilding.type].icon}</span>
                   <h3 className="font-bold mt-1">{BUILDINGS[selectedBuilding.type].nameTh}</h3>
                   <p className="text-xs text-muted-foreground">{BUILDINGS[selectedBuilding.type].description}</p>
                 </div>
@@ -216,13 +324,19 @@ export default function CityBuilder() {
                     🏪 จัดการร้านค้า
                   </Button>
                 )}
-                <Button variant="outline" size="sm" className="w-full rounded-xl active:scale-[0.97]">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full rounded-xl active:scale-[0.97]"
+                  onClick={handleUpgrade}
+                  disabled={selectedBuilding.level >= BUILDINGS[selectedBuilding.type].maxLevel}
+                >
                   ⬆️ อัพเกรด (🪙 {BUILDINGS[selectedBuilding.type].cost * selectedBuilding.level})
                 </Button>
               </div>
             ) : (
               <div className="glass-card rounded-2xl p-6 text-center text-sm text-muted-foreground">
-                <span className="text-3xl block mb-2">🏙️</span>
+                <span className="text-3xl block mb-2 animate-float">🏙️</span>
                 คลิกที่อาคารเพื่อดูรายละเอียด
               </div>
             )}
@@ -252,7 +366,6 @@ export default function CityBuilder() {
           </TabsContent>
         </Tabs>
 
-        {/* City Stats Summary */}
         <div className="glass-card rounded-2xl p-4 space-y-2">
           <h3 className="font-semibold text-sm">📊 สรุปเมือง</h3>
           <div className="grid grid-cols-2 gap-2 text-xs">
@@ -268,7 +381,6 @@ export default function CityBuilder() {
         </div>
       </div>
 
-      {/* Shop Modal */}
       {shopModal && (
         <ShopModal
           open={!!shopModal}
