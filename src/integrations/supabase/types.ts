@@ -14,7 +14,226 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      buildings: {
+        Row: {
+          building_level: number
+          building_type: string
+          created_at: string
+          grid_col: number
+          grid_row: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          building_level?: number
+          building_type: string
+          created_at?: string
+          grid_col: number
+          grid_row: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          building_level?: number
+          building_type?: string
+          created_at?: string
+          grid_col?: number
+          grid_row?: number
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      code_redemptions: {
+        Row: {
+          code_id: string
+          id: string
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          code_id: string
+          id?: string
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          code_id?: string
+          id?: string
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_redemptions_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "redeem_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory: {
+        Row: {
+          created_at: string
+          id: string
+          item_icon: string
+          item_name: string
+          item_type: string
+          quantity: number
+          rarity: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_icon?: string
+          item_name: string
+          item_type?: string
+          quantity?: number
+          rarity?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_icon?: string
+          item_name?: string
+          item_type?: string
+          quantity?: number
+          rarity?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          city_name: string
+          coins: number
+          created_at: string
+          discord_id: string | null
+          discord_username: string | null
+          display_name: string
+          exp: number
+          id: string
+          level: number
+          prestige: number
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          city_name?: string
+          coins?: number
+          created_at?: string
+          discord_id?: string | null
+          discord_username?: string | null
+          display_name?: string
+          exp?: number
+          id: string
+          level?: number
+          prestige?: number
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          city_name?: string
+          coins?: number
+          created_at?: string
+          discord_id?: string | null
+          discord_username?: string | null
+          display_name?: string
+          exp?: number
+          id?: string
+          level?: number
+          prestige?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      redeem_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number
+          reward_amount: number
+          reward_description: string | null
+          reward_type: string
+          used_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number
+          reward_amount?: number
+          reward_description?: string | null
+          reward_type?: string
+          used_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number
+          reward_amount?: number
+          reward_description?: string | null
+          reward_type?: string
+          used_count?: number
+        }
+        Relationships: []
+      }
+      shop_items: {
+        Row: {
+          building_id: string | null
+          created_at: string
+          daily_limit: number
+          id: string
+          item_icon: string
+          item_name: string
+          price: number
+          sold_today: number
+          user_id: string
+        }
+        Insert: {
+          building_id?: string | null
+          created_at?: string
+          daily_limit?: number
+          id?: string
+          item_icon?: string
+          item_name: string
+          price?: number
+          sold_today?: number
+          user_id: string
+        }
+        Update: {
+          building_id?: string | null
+          created_at?: string
+          daily_limit?: number
+          id?: string
+          item_icon?: string
+          item_name?: string
+          price?: number
+          sold_today?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_items_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
