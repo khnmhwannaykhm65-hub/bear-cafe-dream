@@ -1,6 +1,8 @@
 import { Coins, TrendingUp, Building2, Star, Clock, ArrowUpRight } from 'lucide-react';
 import { formatNumber, getExpForLevel } from '@/lib/game-logic';
 import { Progress } from '@/components/ui/progress';
+import RedeemCode from '@/components/RedeemCode';
+import VisitCity from '@/components/VisitCity';
 
 const stats = [
   { label: 'เงินทั้งหมด', value: 12450, icon: Coins, color: 'var(--game-gold)', prefix: '🪙' },
@@ -109,6 +111,18 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Redeem Code + Visit City */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        <div className="animate-slide-up" style={{ animationDelay: '0.3s' }}>
+          <RedeemCode />
+        </div>
+        <div className="animate-slide-up" style={{ animationDelay: '0.35s' }}>
+          <div className="glass-card rounded-2xl p-5">
+            <VisitCity />
           </div>
         </div>
       </div>

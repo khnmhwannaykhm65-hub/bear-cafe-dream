@@ -6,13 +6,13 @@ import {
   BUILDINGS, GRID_SIZE, createEmptyGrid, calcBuildingIncome, calcTotalCityIncome,
   getActiveBonuses, formatNumber, type BuildingType, type PlacedBuilding
 } from '@/lib/game-logic';
+import ShopModal from '@/components/ShopModal';
 
 type Mode = 'view' | 'build' | 'move' | 'delete';
 
 export default function CityBuilder() {
   const [grid, setGrid] = useState(() => {
     const g = createEmptyGrid();
-    // Preset some buildings for demo
     g[1][1] = { type: 'cafe', level: 2, row: 1, col: 1 };
     g[1][2] = { type: 'park', level: 1, row: 1, col: 2 };
     g[2][1] = { type: 'bakery', level: 1, row: 2, col: 1 };
@@ -24,6 +24,7 @@ export default function CityBuilder() {
   const [selectedBuild, setSelectedBuild] = useState<BuildingType>('cafe');
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
   const [moveSource, setMoveSource] = useState<[number, number] | null>(null);
+  const [shopModal, setShopModal] = useState<{ type: BuildingType; row: number; col: number } | null>(null);
 
   const totalIncome = useMemo(() => calcTotalCityIncome(grid), [grid]);
   const bonuses = useMemo(() => getActiveBonuses(grid), [grid]);
@@ -132,7 +133,7 @@ export default function CityBuilder() {
                     className={cn(
                       "aspect-square rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center text-xs active:scale-95 relative overflow-hidden",
                       bld
-                        ? "bg-white border-pink-200 hover:border-primary shadow-sm"
+                        ? "bg-card border-pink-200 hover:border-primary shadow-sm"
                         : "bg-secondary/40 border-dashed border-border hover:bg-secondary/60",
                       isSelected && "ring-2 ring-primary ring-offset-2",
                       isMoveSource && "ring-2 ring-[hsl(var(--game-gold))] ring-offset-2 animate-pulse",
@@ -207,7 +208,11 @@ export default function CityBuilder() {
                   </div>
                 )}
                 {BUILDINGS[selectedBuilding.type].hasShop && (
-                  <Button size="sm" className="w-full rounded-xl mt-2 active:scale-[0.97]">
+                  <Button
+                    size="sm"
+                    className="w-full rounded-xl mt-2 active:scale-[0.97]"
+                    onClick={() => setShopModal({ type: selectedBuilding.type, row: selectedCell![0], col: selectedCell![1] })}
+                  >
                     🏪 จัดการร้านค้า
                   </Button>
                 )}
@@ -262,6 +267,17 @@ export default function CityBuilder() {
           </div>
         </div>
       </div>
+
+      {/* Shop Modal */}
+      {shopModal && (
+        <ShopModal
+          open={!!shopModal}
+          onClose={() => setShopModal(null)}
+          buildingType={shopModal.type}
+          row={shopModal.row}
+          col={shopModal.col}
+        />
+      )}
     </div>
   );
 }
