@@ -13,6 +13,7 @@ import Marketplace from "./pages/Marketplace";
 import MiniGames from "./pages/MiniGames";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { ReactNode } from "react";
 
