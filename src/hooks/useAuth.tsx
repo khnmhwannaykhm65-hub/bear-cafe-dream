@@ -13,6 +13,8 @@ interface Profile {
   avatar_url: string | null;
   discord_id: string | null;
   discord_username: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface AuthContextType {
