@@ -14,6 +14,7 @@ import MiniGames from "./pages/MiniGames";
 import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
+import DiscordCallback from "./pages/DiscordCallback";
 import NotFound from "./pages/NotFound";
 import { ReactNode } from "react";
 
@@ -42,6 +43,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/auth/discord/callback" element={<DiscordCallback />} />
             <Route path="/dashboard" element={<ProtectedRoute><GameLayout><Dashboard /></GameLayout></ProtectedRoute>} />
             <Route path="/city" element={<ProtectedRoute><GameLayout><CityBuilder /></GameLayout></ProtectedRoute>} />
             <Route path="/inventory" element={<ProtectedRoute><GameLayout><Inventory /></GameLayout></ProtectedRoute>} />

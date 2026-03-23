@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { type BuildingType, BUILDINGS } from '@/lib/game-logic';
+import CoinIcon from '@/components/CoinIcon';
 
 const PRODUCT_ICONS = ['☕', '🍵', '🧋', '🥐', '🍰', '🧁', '🍩', '🥧', '🍪', '🎂'];
 
@@ -96,7 +97,7 @@ export default function ShopModal({ open, onClose, buildingType }: ShopModalProp
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="bg-secondary/50 rounded-xl p-2">
-            <p className="font-mono text-lg font-bold text-primary">🪙 {totalRevenue}</p>
+            <p className="font-mono text-lg font-bold text-primary flex items-center justify-center gap-1"><CoinIcon size={16} /> {totalRevenue}</p>
             <p className="text-[10px] text-muted-foreground">รายได้วันนี้</p>
           </div>
           <div className="bg-secondary/50 rounded-xl p-2">
@@ -117,7 +118,7 @@ export default function ShopModal({ open, onClose, buildingType }: ShopModalProp
               <span className="text-xl">{item.icon}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{item.name}</p>
-                <p className="text-[10px] text-muted-foreground">🪙 {item.price} • ขาย {item.soldToday}/{item.dailyLimit}</p>
+                <p className="text-[10px] text-muted-foreground flex items-center gap-0.5"><CoinIcon size={10} /> {item.price} • ขาย {item.soldToday}/{item.dailyLimit}</p>
               </div>
               <Button variant="ghost" size="sm" onClick={() => removeProduct(item.id)} className="text-destructive h-7 px-2 rounded-lg">✕</Button>
             </div>
@@ -175,7 +176,7 @@ export default function ShopModal({ open, onClose, buildingType }: ShopModalProp
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px]">👤</div>
               <div className="flex-1">
                 <span className="font-medium">{v.name}</span>
-                <span className="text-muted-foreground"> ซื้อ {v.item} (🪙{v.price})</span>
+                <span className="text-muted-foreground"> ซื้อ {v.item} (<CoinIcon size={10} className="inline" />{v.price})</span>
               </div>
               <span className="text-muted-foreground">{v.time}</span>
             </div>

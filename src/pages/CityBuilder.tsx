@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import ShopModal from '@/components/ShopModal';
+import CoinIcon from '@/components/CoinIcon';
 
 type Mode = 'view' | 'build' | 'move' | 'delete';
 
@@ -24,7 +25,6 @@ export default function CityBuilder() {
   const [shopModal, setShopModal] = useState<{ type: BuildingType; row: number; col: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load buildings from DB
   useEffect(() => {
     if (!profile) return;
     (async () => {
@@ -62,11 +62,10 @@ export default function CityBuilder() {
       if (!grid[r][c]) {
         const def = BUILDINGS[selectedBuild];
         if ((profile.coins ?? 0) < def.cost) {
-          toast({ title: '❌ เงินไม่พอ!', description: `ต้องการ 🪙 ${def.cost}`, variant: 'destructive' });
+          toast({ title: '❌ เงินไม่พอ!', description: `ต้องการ ${def.cost} เหรียญ`, variant: 'destructive' });
           return;
         }
 
-        // Insert building to DB
         const { error } = await supabase.from('buildings').insert({
           user_id: profile.id,
           building_type: selectedBuild,
@@ -76,7 +75,6 @@ export default function CityBuilder() {
         });
 
         if (!error) {
-          // Deduct coins
           await supabase.from('profiles').update({
             coins: (profile.coins ?? 0) - def.cost,
             updated_at: new Date().toISOString(),
@@ -92,7 +90,6 @@ export default function CityBuilder() {
       }
     } else if (mode === 'delete') {
       if (grid[r][c]) {
-        // Delete from DB
         await supabase.from('buildings')
           .delete()
           .eq('user_id', profile.id)
@@ -110,7 +107,6 @@ export default function CityBuilder() {
         setMoveSource([r, c]);
       } else if (moveSource) {
         if (!grid[r][c]) {
-          // Update position in DB
           await supabase.from('buildings')
             .update({ grid_row: r, grid_col: c })
             .eq('user_id', profile.id)
@@ -218,7 +214,7 @@ export default function CityBuilder() {
                 >
                   <span className="text-2xl animate-bounce-gentle">{b.icon}</span>
                   <span className="truncate w-full text-center">{b.nameTh}</span>
-                  <span className="font-mono-game text-[10px] text-muted-foreground">🪙{b.cost}</span>
+                  <span className="font-mono-game text-[10px] text-muted-foreground flex items-center gap-0.5"><CoinIcon size={10} />{b.cost}</span>
                 </button>
               ))}
             </div>
@@ -294,7 +290,7 @@ export default function CityBuilder() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">รายได้พื้นฐาน</span>
-                    <span className="font-mono-game">🪙 {selectedInfo.base}/ชม.</span>
+                    <span className="font-mono-game flex items-center gap-1"><CoinIcon size={12} /> {selectedInfo.base}/ชม.</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">โบนัส</span>
@@ -302,7 +298,7 @@ export default function CityBuilder() {
                   </div>
                   <div className="flex justify-between border-t pt-2">
                     <span className="font-semibold">รวม</span>
-                    <span className="font-mono-game font-bold text-primary">🪙 {selectedInfo.total}/ชม.</span>
+                    <span className="font-mono-game font-bold text-primary flex items-center gap-1"><CoinIcon size={12} /> {selectedInfo.total}/ชม.</span>
                   </div>
                 </div>
                 {selectedInfo.activeRules.length > 0 && (
@@ -331,7 +327,7 @@ export default function CityBuilder() {
                   onClick={handleUpgrade}
                   disabled={selectedBuilding.level >= BUILDINGS[selectedBuilding.type].maxLevel}
                 >
-                  ⬆️ อัพเกรด (🪙 {BUILDINGS[selectedBuilding.type].cost * selectedBuilding.level})
+                  ⬆️ อัพเกรด (<CoinIcon size={12} className="mx-0.5" /> {BUILDINGS[selectedBuilding.type].cost * selectedBuilding.level})
                 </Button>
               </div>
             ) : (

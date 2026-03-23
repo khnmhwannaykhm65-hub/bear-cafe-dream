@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import CoinIcon from '@/components/CoinIcon';
 
 const GACHA_ITEMS = [
   { icon: '☕', name: 'กาแฟดริป', rarity: 'common' },
@@ -10,7 +11,7 @@ const GACHA_ITEMS = [
   { icon: '💎', name: 'คริสตัลเมือง', rarity: 'legendary' },
 ];
 
-const SPIN_PRIZES = ['🪙 100', '⚡ EXP x2', '🪙 50', '🎁 ลัง', '🪙 200', '💎 คริสตัล', '🪙 25', '⭐ P.Point'];
+const SPIN_PRIZES = ['💰 100', '⚡ EXP x2', '💰 50', '🎁 ลัง', '💰 200', '💎 คริสตัล', '💰 25', '⭐ P.Point'];
 
 export default function MiniGames() {
   const { toast } = useToast();
@@ -79,7 +80,7 @@ export default function MiniGames() {
           </div>
 
           <Button onClick={doGacha} disabled={gachaAnimating} className="w-full rounded-xl active:scale-[0.97]">
-            {gachaAnimating ? '🔄 กำลังสุ่ม...' : '🎰 สุ่ม 1 ครั้ง (🪙 50)'}
+            {gachaAnimating ? '🔄 กำลังสุ่ม...' : <span className="flex items-center gap-1">🎰 สุ่ม 1 ครั้ง (<CoinIcon size={14} /> 50)</span>}
           </Button>
         </div>
 

@@ -1,10 +1,11 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Building2, Backpack, Store, Gamepad2, Trophy, User, Menu, X, Coins, Star, LogOut } from 'lucide-react';
+import { Home, Building2, Backpack, Store, Gamepad2, Trophy, User, Menu, X, Star, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatNumber } from '@/lib/game-logic';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import CoinIcon from '@/components/CoinIcon';
 
 const NAV_ITEMS = [
   { path: '/dashboard', icon: Home, label: 'หน้าหลัก', emoji: '🏠' },
@@ -60,7 +61,7 @@ export default function GameLayout({ children }: GameLayoutProps) {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 bg-secondary/80 rounded-full px-3 py-1.5 animate-coin-shine">
-            <Coins className="w-4 h-4 text-[hsl(var(--game-gold))]" />
+            <CoinIcon size={16} />
             <span className="font-mono-game text-sm font-bold">{formatNumber(money)}</span>
           </div>
           <div className="hidden sm:flex items-center gap-1.5 bg-secondary/80 rounded-full px-3 py-1.5">
@@ -123,7 +124,7 @@ export default function GameLayout({ children }: GameLayoutProps) {
                 />
               </div>
               <div className="flex items-center gap-2 pt-1">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm">
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm overflow-hidden">
                   {profile?.avatar_url ? (
                     <img src={profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
                   ) : '👤'}
