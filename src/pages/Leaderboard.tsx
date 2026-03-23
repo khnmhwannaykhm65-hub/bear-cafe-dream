@@ -3,6 +3,7 @@ import { formatNumber } from '@/lib/game-logic';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import CoinIcon from '@/components/CoinIcon';
 
 const RANK_MEDALS = ['', '🥇', '🥈', '🥉'];
 
@@ -43,7 +44,7 @@ export default function Leaderboard() {
           </div>
           <div className="flex-1">
             <p className="font-semibold">⭐ อันดับของคุณ</p>
-            <p className="text-sm text-muted-foreground">{myEntry.cityName} • 🪙 {formatNumber(myEntry.score)}</p>
+            <p className="text-sm text-muted-foreground flex items-center gap-1">{myEntry.cityName} • <CoinIcon size={14} /> {formatNumber(myEntry.score)}</p>
           </div>
         </div>
       )}
@@ -69,7 +70,7 @@ export default function Leaderboard() {
               </p>
               <p className="text-xs text-muted-foreground truncate">🏙️ {entry.cityName}</p>
             </div>
-            <p className="font-mono-game text-sm font-bold">🪙 {formatNumber(entry.score)}</p>
+            <p className="font-mono-game text-sm font-bold flex items-center gap-1"><CoinIcon size={14} /> {formatNumber(entry.score)}</p>
           </div>
         ))}
         {entries.length === 0 && (

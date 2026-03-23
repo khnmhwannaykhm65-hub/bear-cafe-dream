@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { BUILDINGS, GRID_SIZE, type PlacedBuilding, type BuildingType } from '@/lib/game-logic';
+import { BUILDINGS, GRID_SIZE, type PlacedBuilding } from '@/lib/game-logic';
 import { useToast } from '@/hooks/use-toast';
+import CoinIcon from '@/components/CoinIcon';
 
 interface CityOwner {
   name: string;
@@ -86,7 +87,7 @@ export default function VisitCity() {
   const [selectedCity, setSelectedCity] = useState<CityOwner | null>(null);
 
   function handleBuy(ownerName: string, itemName: string, price: number) {
-    toast({ title: `🛒 ซื้อ ${itemName} จาก ${ownerName} สำเร็จ!`, description: `หัก 🪙 ${price}` });
+    toast({ title: `🛒 ซื้อ ${itemName} จาก ${ownerName} สำเร็จ!`, description: `หักเหรียญ ${price}` });
   }
 
   return (
@@ -117,7 +118,6 @@ export default function VisitCity() {
         ))}
       </div>
 
-      {/* City Visit Modal */}
       <Dialog open={!!selectedCity} onOpenChange={(v) => !v && setSelectedCity(null)}>
         {selectedCity && (
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl">
@@ -128,7 +128,6 @@ export default function VisitCity() {
               </DialogTitle>
             </DialogHeader>
 
-            {/* Stats */}
             <div className="flex gap-3 text-center text-xs">
               <div className="bg-secondary/50 rounded-xl px-3 py-2 flex-1">
                 <p className="font-bold">Lv.{selectedCity.level}</p>
@@ -144,7 +143,6 @@ export default function VisitCity() {
               </div>
             </div>
 
-            {/* Mini Grid */}
             <div>
               <h3 className="font-semibold text-sm mb-2">🗺️ แผนที่เมือง</h3>
               <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)` }}>
@@ -166,7 +164,6 @@ export default function VisitCity() {
               </div>
             </div>
 
-            {/* Shop Items */}
             {selectedCity.shopItems.length > 0 && (
               <div>
                 <h3 className="font-semibold text-sm mb-2">🛍️ ร้านค้าของ {selectedCity.name}</h3>
@@ -176,7 +173,7 @@ export default function VisitCity() {
                       <span className="text-xl">{item.icon}</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{item.name}</p>
-                        <p className="text-[10px] text-muted-foreground">🪙 {item.price} • ขายแล้ว {item.sold}</p>
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-0.5"><CoinIcon size={10} /> {item.price} • ขายแล้ว {item.sold}</p>
                       </div>
                       <Button
                         size="sm"

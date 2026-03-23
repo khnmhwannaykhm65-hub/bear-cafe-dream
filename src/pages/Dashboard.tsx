@@ -1,4 +1,4 @@
-import { Coins, TrendingUp, Building2, Star, Clock, ArrowUpRight } from 'lucide-react';
+import { TrendingUp, Building2, Star, Clock, ArrowUpRight } from 'lucide-react';
 import { formatNumber, getExpForLevel } from '@/lib/game-logic';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import RedeemCode from '@/components/RedeemCode';
 import VisitCity from '@/components/VisitCity';
+import CoinIcon from '@/components/CoinIcon';
 
 const dailyQuests = [
   { name: 'สร้างตึก 3 หลัง', progress: 2, total: 3 },
@@ -42,10 +43,10 @@ export default function Dashboard() {
   const coins = profile?.coins ?? 0;
 
   const stats = [
-    { label: 'เงินทั้งหมด', value: coins, icon: Coins, prefix: '🪙' },
-    { label: 'รายได้/ชม.', value: 580, icon: TrendingUp, prefix: '💰' },
-    { label: 'จำนวนตึก', value: buildingCount, icon: Building2, prefix: '🏗️' },
-    { label: 'อันดับ', value: 3, icon: Star, prefix: '🏆' },
+    { label: 'เงินทั้งหมด', value: coins, icon: 'coin' as const },
+    { label: 'รายได้/ชม.', value: 580, emoji: '💰' },
+    { label: 'จำนวนตึก', value: buildingCount, emoji: '🏗️' },
+    { label: 'อันดับ', value: 3, emoji: '🏆' },
   ];
 
   return (
@@ -61,7 +62,11 @@ export default function Dashboard() {
         {stats.map((stat) => (
           <div key={stat.label} className="glass-card rounded-2xl p-4 space-y-2 hover:shadow-xl hover:shadow-pink-200/20 transition-shadow duration-300">
             <div className="flex items-center justify-between">
-              <span className="text-2xl animate-bounce-gentle">{stat.prefix}</span>
+              {'icon' in stat && stat.icon === 'coin' ? (
+                <CoinIcon size={28} className="animate-bounce-gentle" />
+              ) : (
+                <span className="text-2xl animate-bounce-gentle">{'emoji' in stat ? stat.emoji : ''}</span>
+              )}
               <ArrowUpRight className="w-4 h-4 text-[hsl(var(--game-exp))]" />
             </div>
             <p className="font-mono-game text-xl font-bold">{formatNumber(stat.value)}</p>

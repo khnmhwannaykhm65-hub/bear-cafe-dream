@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { SAMPLE_MARKET, MARKET_CATEGORIES, formatNumber, type MarketItem } from '@/lib/game-logic';
 import { Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import CoinIcon from '@/components/CoinIcon';
 
 export default function Marketplace() {
   const [filter, setFilter] = useState('all');
@@ -19,7 +20,7 @@ export default function Marketplace() {
 
   function handleBuy(item: MarketItem) {
     if (item.mine) return;
-    toast({ title: `🛒 ซื้อ ${item.name} สำเร็จ!`, description: `หัก 🪙 ${item.price} จากกระเป๋า` });
+    toast({ title: `🛒 ซื้อ ${item.name} สำเร็จ!`, description: `หักเหรียญ ${item.price} จากกระเป๋า` });
   }
 
   return (
@@ -70,7 +71,7 @@ export default function Marketplace() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-mono-game font-bold text-primary">🪙 {formatNumber(item.price)}</p>
+                <p className="font-mono-game font-bold text-primary flex items-center gap-1"><CoinIcon size={14} /> {formatNumber(item.price)}</p>
                 <p className="text-[10px] text-muted-foreground">ขายแล้ว {item.sold} ชิ้น</p>
               </div>
               <Button
